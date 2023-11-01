@@ -2,7 +2,7 @@
  * @description 通用工具函数 --> 积极推动服务端规范化返回状态码一致性
  * @author 刘永奇
 */
-import log4js from './log4j'
+const log4js = require('./log4j')
 const CODE = {
   SUCCESS:200,
   PARAM_ERROR:10001, // 参数错误
@@ -28,10 +28,10 @@ module.exports = {
     log4js.debug(data)
     return {code,data,msg}
   },
-  fail(msg='',code=CODE.BUSINESS_ERROR){
+  fail(msg='',code=CODE.BUSINESS_ERROR,data=''){
     log4js.debug(msg)
     return {code,data,msg}
-    
-  }
+  },
+  CODE
   
 }
