@@ -1,5 +1,7 @@
 const router = require("koa-router")();
 const User = require("../models/userSchema");
+const Menu = require("../models/menuSchema");
+const Roles = require("../models/roleSchema");
 const util = require("../utils/util");
 const jwt = require("jsonwebtoken");
 const Counter = require("../models/counterSchema");
@@ -151,5 +153,71 @@ router.post("/operate", async (ctx) => {
     }
   }
 });
+
+// 获得全部用户列表
+router.get("/all/list", async (ctx) => {
+  try {
+    const list = await User.find({}, "userId userName userEmail");
+    ctx.body = util.success(list);
+  } catch (err) {
+    ctx.body = util.fail(err.stack);
+  }
+});
+
+// 获取用户对应的权限菜单
+router.get("/getPermissionList", async (ctx) => {
+  let authorization = ctx.request.headers.authorization;
+  let { data } = util.decoded(authorization);
+  // 因为getMenuList 为异步方法所以需要使用await进行同步--否则返回的是promise对象
+  let menuList = await getMenuList(data.role, data.roleList);
+  // JSON.parse(JSON.stringify())实现对引用类型的深拷贝。因为引用类型存放在堆中不进行深拷贝会影响堆中数据
+  let actionList = getActionList(JSON.parse(JSON.stringify(menuList)));
+  ctx.body = util.success({ menuList, actionList });
+});
+
+async function getMenuList(userRole, roleKeys) {
+  let rootList = [];
+  if (userRole == 0) {
+    rootList = (await Menu.find({})) || [];
+  } else {
+    // 查找用户角色-->获取权限列表
+    let roleList = (await Roles.find({ _id: { $in: roleKeys } })) || [];
+    console.log(roleList);
+    let permissionList = [];
+    // 遍历角色，合并权限id
+    roleList.map((role) => {
+      let { checkedKeys, halfCheckedKeys } = role.permissionList;
+      permissionList = permissionList.concat([
+        ...checkedKeys,
+        ...halfCheckedKeys,
+      ]);
+    });
+    // 通过set集合将重复权限进行去重
+    permissionList = [...new Set(permissionList)];
+    // 通过权限列表获取菜单节点，权限列表id对应菜单_id
+    rootList = await Menu.find({ _id: { $in: permissionList } });
+  }
+  console.log(rootList);
+  return util.getTreeMenu(rootList, null, []);
+}
+
+function getActionList(list) {
+  const actionList = [];
+  const deep = (arr) => {
+    while (arr.length) {
+      let item = arr.pop();
+      if (item.action) {
+        item.action.map((action) => {
+          actionList.push(action.menuCode);
+        });
+      }
+      if (item.children && !item.action) {
+        deep(item.children);
+      }
+    }
+  };
+  deep(list);
+  return actionList;
+}
 
 module.exports = router;
