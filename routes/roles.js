@@ -35,7 +35,7 @@ router.get("/list", async (ctx) => {
   }
 });
 
-// 角色操作：常见、编辑和删除
+// 角色操作：创建、编辑和删除
 router.post("/operate", async (ctx) => {
   const { _id, roleName, remark, action } = ctx.request.body;
   let res, info;

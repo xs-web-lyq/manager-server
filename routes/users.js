@@ -19,11 +19,11 @@ router.post("/login", async (ctx, next) => {
      * 2. {userId:1,userName:1} // 1 选取 0 屏蔽
      * 3. select('userId')
      */
-    debugger;
+
     const result = await User.findOne(
       {
         userName,
-        userPwd,
+        userPwd: md5(userPwd),
       },
       "userId userName userEmail state role deptId roleList"
     );
