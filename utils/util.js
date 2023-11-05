@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 const CODE = {
   SUCCESS: 200,
   PARAM_ERROR: 10001, // 参数错误
-  USER_ACCOUNT_ERROR: 20001, //账号或密码错误
+  USER_ACCOUNT_ERROR: 20001, //账号或密码错误---不区分账户密码的错误可以防止攻击者进行攻击，不知道哪一个错了需要尝试很多次对于用户更安全
   USER_LOGIN_ERROR: 30001, // 用户未登录
   BUSINESS_ERROR: 40001, //业务请求失败
   AUTH_ERROR: 50001, //认证失败或TOKEN过期
@@ -16,8 +16,10 @@ const CODE = {
 
 module.exports = {
   pager({ pageNum = 1, pageSize = 10 }) {
+    // 如果参数为字符串进行转义
     pageNum *= 1;
     pageSize *= 1;
+    // 计算开始索引
     const skipIndex = (pageNum - 1) * pageSize;
     return {
       page: {

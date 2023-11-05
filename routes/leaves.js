@@ -7,19 +7,16 @@ router.prefix("/leave");
 
 router.get("/list", async (ctx) => {
   const { applyState, type } = ctx.request.query;
-
   const { page, skipIndex } = util.pager(ctx.request.query);
   // 获得token
   let authorization = ctx.request.headers.authorization;
   // 解密token获取用户信息--- 获取当前用户的数据
   let { data } = util.decoded(authorization);
-
   try {
     let params = {};
-
     if (type == "approve") {
       if (applyState == 1 || applyState == 2) {
-        // 当前用户看到的是需要自己进行审批的待审批申请
+        // 当前用户看到的是需要自己进行审批的待审批申请--当前审批人为本人才会返回
         params.curAuditUserName = data.userName;
         params.$or = [{ applyState: 1 }, { applyState: 2 }];
       } else if (applyState > 2) {
@@ -29,7 +26,7 @@ router.get("/list", async (ctx) => {
         params = { "auditFlows.userId": data.userId };
       }
     } else {
-      // 整合参数，在mongoDB中嵌套数据查询比较麻烦需要使用点语法进行查询
+      // 如果为审批申请页则返回自己的申请。整合参数，在mongoDB中嵌套数据查询比较麻烦需要使用点语法进行查询
       params = {
         "applyUser.userId": data.userId,
       };
@@ -38,7 +35,6 @@ router.get("/list", async (ctx) => {
 
     // 获取数据---> 通过await之后查询返回的数据就不是promise了，而是一个真实数据 -->所以在这里不能进行通过同步
     const query = Leaves.find(params);
-
     // 根据分页进行数据的截取
     const list = await query.skip(skipIndex).limit(page.pageSize);
     // 获取查询到数据的总条数

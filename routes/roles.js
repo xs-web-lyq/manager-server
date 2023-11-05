@@ -9,7 +9,7 @@ router.get("/allList", async (ctx) => {
     const list = await Roles.find({}, "_id roleName");
     ctx.body = utils.success(list);
   } catch (err) {
-    ctx.body = utils.fail(`查询失败${er.stack}`);
+    ctx.body = utils.fail(`查询失败${err.stack}`);
   }
 });
 
@@ -76,7 +76,7 @@ router.post("/operate", async (ctx) => {
 router.post("/update/permission", async (ctx) => {
   const { _id, permissionList } = ctx.request.body;
   try {
-    let params = { permissionList, update: new Date() };
+    let params = { permissionList, updateTime: new Date() };
     let res = await Roles.findByIdAndUpdate(_id, params);
     ctx.body = utils.success("", "权限设置成功");
   } catch (err) {
